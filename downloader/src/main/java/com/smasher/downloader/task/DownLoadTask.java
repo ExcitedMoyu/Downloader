@@ -31,7 +31,6 @@ public class DownLoadTask implements Runnable {
 
     private static final String TAG = "[DL]DownLoadTask";
 
-
     private DownloadInfo mDownloadInfo;
     private OkHttpClient mClient;
     private WeakReferenceHandler mHandler;
@@ -172,7 +171,6 @@ public class DownLoadTask implements Runnable {
                         e.printStackTrace();
                     }
                 }
-
             }
         } else {
             if (!target.exists()) {
@@ -201,7 +199,6 @@ public class DownLoadTask implements Runnable {
         RandomAccessFile accessFile = null;
 
         try {
-
             String url = downloadInfo.getUrl();
             long headDownloadLength = downloadInfo.getProgress();
             //文件的总长度
@@ -238,7 +235,6 @@ public class DownLoadTask implements Runnable {
                     sendMessage();
                     return;
                 }
-
 
                 //下载增量进度大于3%并且时间大于2秒更新一次
                 if (frequency(percent, percentLast) && System.currentTimeMillis() - time > 2000) {

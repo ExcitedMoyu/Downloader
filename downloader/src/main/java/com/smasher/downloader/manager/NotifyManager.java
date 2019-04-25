@@ -27,7 +27,6 @@ public class NotifyManager {
     private static final String TAG = "[DL]Notification";
     private SparseArray<RemoteViews> remoteViews = new SparseArray<>();
 
-
     private NotificationManager mNotificationManager;
     private NotificationCompat.Builder mBuilder;
 

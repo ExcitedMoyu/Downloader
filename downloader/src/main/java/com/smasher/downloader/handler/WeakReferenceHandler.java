@@ -15,12 +15,12 @@ public class WeakReferenceHandler extends Handler {
 
     public WeakReferenceHandler(Callback cb) {
         super();
-        mWeakReferCallBack = new WeakReference<Callback>(cb);
+        mWeakReferCallBack = new WeakReference<>(cb);
     }
 
     public WeakReferenceHandler(Looper looper, Callback cb) {
         super(looper);
-        mWeakReferCallBack = new WeakReference<Callback>(cb);
+        mWeakReferCallBack = new WeakReference<>(cb);
     }
 
     @Override
