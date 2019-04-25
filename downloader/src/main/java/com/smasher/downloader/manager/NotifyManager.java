@@ -127,6 +127,7 @@ public class NotifyManager {
         }
 
         if (mNotificationManager != null) {
+            Log.d(TAG, "updateNotification: name" + downloadInfo.getName() + "  id:" + downloadInfo.getId());
             mNotificationManager.notify(downloadInfo.getId(), mBuilder.build());
         }
     }

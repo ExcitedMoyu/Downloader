@@ -150,6 +150,9 @@ public class DownloadService extends Service implements Handler.Callback {
         boolean contains = tasks.containsKey(info.getUrl());
         if (!contains) {
             //任务列表中没有
+            if (info.getId() <= 0) {
+                info.setId(tasks.size() + 1000);
+            }
             task = new DownLoadTask(info, mHandler);
             tasks.put(info.getUrl(), task);
         } else {

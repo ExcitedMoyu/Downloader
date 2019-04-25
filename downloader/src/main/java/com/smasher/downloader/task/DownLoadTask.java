@@ -248,8 +248,6 @@ public class DownLoadTask implements Runnable {
 
                 accessFile.write(buffer, 0, offset);
                 downloadInfo.setProgress(downloadInfo.getProgress() + offset);
-                Log.d(TAG, "downLoadAPK: Progress-" + downloadInfo.getProgress() + "  Total-" + downloadInfo.getTotal());
-                Log.d(TAG, "downLoadAPK: Progress-" + (downloadInfo.getProgress() / downloadInfo.getTotal()));
                 percent = getPercent(downloadInfo);
             }
 
