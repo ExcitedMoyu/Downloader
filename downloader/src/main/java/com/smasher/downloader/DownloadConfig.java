@@ -28,6 +28,7 @@ public class DownloadConfig {
     public static final String NOTIFICATION_CHANNEL_ID = "download_channelId";
     public static final String NOTIFICATION_CHANNEL_NAME = "download_mesage";
 
+
     private static NotificationChannel channel;
 
     /**
@@ -52,14 +53,21 @@ public class DownloadConfig {
 
 
     private static NotificationChannel createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                return channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
-            } else {
-                Log.e(TAG, "Android版本低于26，无需创建通知渠道");
-            }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            return channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
+        } else {
+            Log.e(TAG, "Android版本低于26，无需创建通知渠道");
         }
         return null;
     }
+
+
+    /**
+     * 关于线程池的一些配置
+     */
+    public static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
+    public static final int CORE_POOL_SIZE = Math.max(3, CPU_COUNT / 2);
+    public static final int MAX_POOL_SIZE = CORE_POOL_SIZE * 2;
+    public static final long KEEP_ALIVE_TIME = 0L;
 
 }

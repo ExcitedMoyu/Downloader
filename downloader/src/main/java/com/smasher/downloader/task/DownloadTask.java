@@ -27,16 +27,16 @@ import okhttp3.Response;
  * @author matao
  * @date 2017/3/16
  */
-public class DownLoadTask implements Runnable {
+public class DownloadTask implements Runnable {
 
-    private static final String TAG = "[DL]DownLoadTask";
+    private static final String TAG = "[DL]DownloadTask";
 
     private DownloadInfo mDownloadInfo;
     private OkHttpClient mClient;
     private WeakReferenceHandler mHandler;
 
 
-    public DownLoadTask(DownloadInfo info, WeakReferenceHandler handler) {
+    public DownloadTask(DownloadInfo info, WeakReferenceHandler handler) {
         this.mDownloadInfo = info;
         this.mHandler = handler;
         this.mClient = new OkHttpClient.Builder()

@@ -5,14 +5,14 @@ import android.graphics.BitmapFactory;
 import android.text.TextUtils;
 import android.util.Log;
 
-
 import com.smasher.downloader.DownloadConfig;
-import com.smasher.downloader.thread.ThreadPool;
+import com.smasher.downloader.execute.DownloadExecutor;
 import com.smasher.downloader.util.DownloadUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Hashtable;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
@@ -49,13 +49,23 @@ public class IconManager {
     }
 
 
+
+    private DownloadExecutor mExecutor = new DownloadExecutor(
+            DownloadConfig.CORE_POOL_SIZE,
+            DownloadConfig.MAX_POOL_SIZE,
+            DownloadConfig.KEEP_ALIVE_TIME,
+            TimeUnit.MILLISECONDS,
+            new LinkedBlockingDeque<Runnable>());
+
+
+
     public void loadIcon(final String url) {
 
         if (TextUtils.isEmpty(url)) {
             return;
         }
 
-        ThreadPool.getInstance(ThreadPool.PRIORITY_MEDIUM).submit(new Runnable() {
+        mExecutor.executeRunable(new Runnable() {
             @Override
             public void run() {
                 OkHttpClient mClient = new OkHttpClient.Builder()

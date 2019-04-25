@@ -13,22 +13,23 @@ import android.os.Message;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-
 import com.smasher.downloader.DownloadConfig;
 import com.smasher.downloader.R;
 import com.smasher.downloader.entity.DownloadInfo;
 import com.smasher.downloader.entity.RequestInfo;
+import com.smasher.downloader.execute.DownloadExecutor;
 import com.smasher.downloader.handler.WeakReferenceHandler;
 import com.smasher.downloader.manager.IconManager;
 import com.smasher.downloader.manager.NotifyManager;
-import com.smasher.downloader.task.DownLoadTask;
-import com.smasher.downloader.thread.ThreadPool;
+import com.smasher.downloader.task.DownloadTask;
 import com.smasher.downloader.util.DownloadUtils;
 import com.smasher.downloader.util.NetworkUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author matao
@@ -44,13 +45,18 @@ public class DownloadService extends Service implements Handler.Callback {
     private static boolean showTip = true;
 
     /**
-     * key-url value-DownLoadTask
+     * key-url value-DownloadTask
      */
-    private HashMap<String, DownLoadTask> tasks = new HashMap<>();
-
+    private HashMap<String, DownloadTask> tasks = new HashMap<>();
     private WeakReferenceHandler mHandler;
-
     private String environmentNotWifi;
+
+    private DownloadExecutor mExecutor = new DownloadExecutor(
+            DownloadConfig.CORE_POOL_SIZE,
+            DownloadConfig.MAX_POOL_SIZE,
+            DownloadConfig.KEEP_ALIVE_TIME,
+            TimeUnit.MILLISECONDS,
+            new LinkedBlockingDeque<Runnable>());
 
 
     @Override
@@ -65,7 +71,6 @@ public class DownloadService extends Service implements Handler.Callback {
     public IBinder onBind(Intent intent) {
         return null;
     }
-
 
     /**
      * @param intent  intent
@@ -95,17 +100,13 @@ public class DownloadService extends Service implements Handler.Callback {
             }
             canRequest = true;
         }
-
-
         return super.onStartCommand(intent, flags, startId);
     }
-
 
     @Override
     public boolean stopService(Intent name) {
         return super.stopService(name);
     }
-
 
     @Override
     public void onDestroy() {
@@ -131,7 +132,6 @@ public class DownloadService extends Service implements Handler.Callback {
             default:
                 break;
         }
-
     }
 
 
@@ -142,7 +142,7 @@ public class DownloadService extends Service implements Handler.Callback {
      */
     private synchronized void actionTask(RequestInfo request) {
 
-        DownLoadTask task;
+        DownloadTask task;
         DownloadInfo info = request.getDownloadInfo();
         int requestType = request.getCommand();
         IconManager.getSingleton().loadIcon(info.getIconUrl());
@@ -153,7 +153,7 @@ public class DownloadService extends Service implements Handler.Callback {
             if (info.getId() <= 0) {
                 info.setId(tasks.size() + 1000);
             }
-            task = new DownLoadTask(info, mHandler);
+            task = new DownloadTask(info, mHandler);
             tasks.put(info.getUrl(), task);
         } else {
             //任务列表中有
@@ -169,11 +169,8 @@ public class DownloadService extends Service implements Handler.Callback {
         }
 
         if (requestType == RequestInfo.COMMAND_DOWNLOAD) {
-            if (!task.isRunning()) {
-                info.setStatus(DownloadInfo.JS_STATE_WAIT);
-                if (!executeTip(info)) {
-                    executeDownload(task);
-                }
+            if (!executeTip(info)) {
+                executeDownload(task);
             }
         } else {
             if (task.getDownloadInfo().getStatus() != DownloadInfo.JS_STATE_PAUSE) {
@@ -246,8 +243,9 @@ public class DownloadService extends Service implements Handler.Callback {
     }
 
 
-    private void executeDownload(DownLoadTask task) {
-        ThreadPool.getInstance(ThreadPool.PRIORITY_GAME_DOWNLOAD).execute(task);
+    private void executeDownload(DownloadTask task) {
+        mExecutor.executeTask(task);
+//        ThreadPool.getInstance(ThreadPool.PRIORITY_GAME_DOWNLOAD).execute(task);
     }
 
     private void executeNotification(DownloadInfo info) {
