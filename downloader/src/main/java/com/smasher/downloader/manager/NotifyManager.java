@@ -86,7 +86,7 @@ public class NotifyManager {
                 mBuilder.setOngoing(false);
                 break;
             case DownloadInfo.JS_STATE_PAUSE:
-                contentText = context.getString(R.string.download_status_pause);
+                contentText = String.format(context.getString(R.string.download_status_pause), progress);
                 mBuilder.setAutoCancel(false);
                 mBuilder.setOngoing(true);
                 break;

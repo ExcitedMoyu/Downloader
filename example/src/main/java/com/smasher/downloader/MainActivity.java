@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
                 DownloadManager.getInstance().addTask(info2).submit(this);
                 break;
             case R.id.stop2:
-                DownloadManager.getInstance().pauseTask(info).submit(this);
+                DownloadManager.getInstance().pauseTask(info2).submit(this);
                 break;
             default:
                 break;

@@ -101,7 +101,7 @@ public class DownloadManager {
      * @return DownloadHelper自身 (方便链式调用)
      */
     public DownloadManager pauseTask(DownloadInfo info) {
-        int requestType = RequestInfo.COMMAND_DOWNLOAD;
+        int requestType = RequestInfo.COMMAND_PAUSE;
         RequestInfo requestInfo = createRequest(info, requestType);
         Log.i(TAG, "pauseTask() -> requestInfo=" + requestInfo);
         requests.add(requestInfo);

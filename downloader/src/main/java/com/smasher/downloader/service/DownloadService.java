@@ -140,7 +140,7 @@ public class DownloadService extends Service implements Handler.Callback {
      *
      * @param request request
      */
-    private void actionTask(RequestInfo request) {
+    private synchronized void actionTask(RequestInfo request) {
 
         DownLoadTask task;
         DownloadInfo info = request.getDownloadInfo();
@@ -158,6 +158,9 @@ public class DownloadService extends Service implements Handler.Callback {
         } else {
             //任务列表中有
             task = tasks.get(info.getUrl());
+            if (task != null) {
+                info = task.getDownloadInfo();
+            }
         }
 
         if (task == null) {
@@ -166,13 +169,16 @@ public class DownloadService extends Service implements Handler.Callback {
         }
 
         if (requestType == RequestInfo.COMMAND_DOWNLOAD) {
-            info.setStatus(DownloadInfo.JS_STATE_WAIT);
-
-            if (!executeTip(info)) {
-                executeDownload(task);
+            if (!task.isRunning()) {
+                info.setStatus(DownloadInfo.JS_STATE_WAIT);
+                if (!executeTip(info)) {
+                    executeDownload(task);
+                }
             }
         } else {
-            task.stop();
+            if (task.getDownloadInfo().getStatus() != DownloadInfo.JS_STATE_PAUSE) {
+                task.stop();
+            }
         }
         executeNotification(info);
     }
@@ -254,7 +260,6 @@ public class DownloadService extends Service implements Handler.Callback {
             info.setStatus(DownloadInfo.JS_STATE_PAUSE);
             //首次提示
             showTip = false;
-
             sendToast(environmentNotWifi);
             return true;
         }

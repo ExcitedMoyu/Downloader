@@ -5,7 +5,7 @@
     <string name="download_status_downloading">正在下载中(%d%%)&#8230;</string>
     <string name="download_status_failed">下载失败</string>
     <string name="download_status_success">下载成功</string>
-    <string name="download_status_pause">下载暂停</string>
+    <string name="download_status_pause">下载暂停(%d%%)</string>
 
     <string name="download_tip_un_wifi">溫馨提示：您现在处于非WIFI环境~</string>
     <string name="download_status_wait">下载排队中&#8230;</string>

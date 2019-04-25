@@ -31,6 +31,7 @@ public class DownLoadTask implements Runnable {
 
     private static final String TAG = "[DL]DownLoadTask";
 
+
     private DownloadInfo mDownloadInfo;
     private OkHttpClient mClient;
     private WeakReferenceHandler mHandler;
@@ -87,7 +88,6 @@ public class DownLoadTask implements Runnable {
         //获取文件长度
         long contentLength = 0;
         if (downloadInfo.getTotal() == 0) {
-
             Request request = new Request.Builder()
                     .url(downloadInfo.getUrl())
                     .build();
@@ -101,10 +101,12 @@ public class DownLoadTask implements Runnable {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+                Log.d(TAG, "getContentLength: error");
             }
+            downloadInfo.setTotal(contentLength);
+        } else {
+            return downloadInfo.getTotal();
         }
-
-        downloadInfo.setTotal(contentLength);
         Log.d(TAG, "getContentLength: " + contentLength);
         return contentLength;
     }
@@ -312,6 +314,11 @@ public class DownLoadTask implements Runnable {
     }
 
 
+    public DownloadInfo getDownloadInfo() {
+        return mDownloadInfo;
+    }
+
+
     private void closeAll(Closeable... closeables) {
         if (closeables == null) {
             return;
@@ -325,5 +332,13 @@ public class DownLoadTask implements Runnable {
                 }
             }
         }
+    }
+
+    public boolean isRunning() {
+        return mDownloadInfo.getStatus() == DownloadInfo.JS_STATE_DOWNLOADING ||
+                mDownloadInfo.getStatus() == DownloadInfo.JS_STATE_DOWNLOAD_PRE ||
+                mDownloadInfo.getStatus() == DownloadInfo.JS_STATE_GET_TOTAL ||
+                mDownloadInfo.getStatus() == DownloadInfo.JS_STATE_WAIT;
+
     }
 }
