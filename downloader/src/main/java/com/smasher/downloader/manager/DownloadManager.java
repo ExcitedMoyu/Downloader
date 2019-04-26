@@ -1,12 +1,17 @@
 package com.smasher.downloader.manager;
 
+import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.IBinder;
 import android.util.Log;
 
 
 import com.smasher.downloader.entity.DownloadInfo;
 import com.smasher.downloader.entity.RequestInfo;
+import com.smasher.downloader.listener.DownloadListener;
 import com.smasher.downloader.listener.DownloadObserver;
 import com.smasher.downloader.service.DownloadService;
 
@@ -15,8 +20,10 @@ import java.util.List;
 
 /**
  * 下载管理
+ *
+ * @author matao
  */
-public class DownloadManager {
+public class DownloadManager implements DownloadListener {
 
     private static final String TAG = "[DL]DownLoadMG";
 
@@ -37,29 +44,72 @@ public class DownloadManager {
     }
 
     private DownloadManager() {
+
+    }
+
+
+    private DownloadService mService;
+
+    private ServiceConnection mConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            DownloadService.DownloadBinder binder = (DownloadService.DownloadBinder) service;
+            mService = binder.getService();
+            mService.setListener(DownloadManager.this);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mService = null;
+        }
+    };
+
+
+    private void bindService(Context context) {
+        Intent intent = new Intent();
+        intent.setClass(context, DownloadService.class);
+        context.bindService(intent, mConnection, Service.BIND_AUTO_CREATE);
+    }
+
+
+    private void unbindService(Context context) {
+        Intent intent = new Intent();
+        intent.setClass(context, DownloadService.class);
+        context.unbindService(mConnection);
     }
 
 
     /**
      * 注册观察者
      */
-    public void registerObserver(DownloadObserver observer) {
+    public void registerObserver(Context context, DownloadObserver observer) {
+
+        if (mService == null) {
+            Intent intent = new Intent(context, DownloadService.class);
+            context.startService(intent);
+        }
+
         synchronized (mObservers) {
             if (!mObservers.contains(observer)) {
                 mObservers.add(observer);
             }
         }
+
+        bindService(context);
     }
 
     /**
      * 反注册观察者
      */
-    public void unRegisterObserver(DownloadObserver observer) {
+    public void unRegisterObserver(Context context, DownloadObserver observer) {
         synchronized (mObservers) {
             if (mObservers.contains(observer)) {
                 mObservers.remove(observer);
             }
         }
+
+
+        unbindService(context);
     }
 
 
@@ -118,6 +168,16 @@ public class DownloadManager {
 
 
     // region #Observers
+
+    private void notifyDownloadWait(DownloadInfo info) {
+        synchronized (mObservers) {
+            for (DownloadObserver observer : mObservers) {
+                observer.onDownloadWait(info);
+            }
+        }
+    }
+
+
     private void notifyDownloadProgressed(DownloadInfo info) {
         synchronized (mObservers) {
             for (DownloadObserver observer : mObservers) {
@@ -159,6 +219,51 @@ public class DownloadManager {
                 observer.onDownloadError(info);
             }
         }
+    }
+
+
+    private void notifyDownloadPause(DownloadInfo info) {
+        synchronized (mObservers) {
+            for (DownloadObserver observer : mObservers) {
+                observer.onDownloadError(info);
+            }
+        }
+    }
+
+
+    @Override
+    public void onDownLoadWait(DownloadInfo info) {
+        notifyDownloadWait(info);
+    }
+
+    @Override
+    public void onDownLoadPre(DownloadInfo info) {
+        notifyDownloadPre(info);
+    }
+
+    @Override
+    public void onDownLoadProgress(DownloadInfo info) {
+        notifyDownloadProgressed(info);
+    }
+
+    @Override
+    public void onDownLoadFinished(DownloadInfo info) {
+        notifyDownloadFinished(info);
+    }
+
+    @Override
+    public void onDownLoadInstalled(DownloadInfo info) {
+        notifyDownloadInstalled(info);
+    }
+
+    @Override
+    public void onDownLoadError(DownloadInfo info) {
+        notifyDownloadError(info);
+    }
+
+    @Override
+    public void onDownLoadPause(DownloadInfo info) {
+        notifyDownloadPause(info);
     }
     //end region
 }

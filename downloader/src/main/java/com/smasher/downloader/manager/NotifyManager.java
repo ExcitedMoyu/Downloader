@@ -55,7 +55,6 @@ public class NotifyManager {
 
 
     public void updateNotification(Context context, DownloadInfo downloadInfo, Bitmap icon) {
-        Log.d(TAG, "updateNotification: " + downloadInfo.getProgress());
         //下载进度
         int progress = 0;
         if (downloadInfo.getTotal() != 0) {
@@ -87,22 +86,23 @@ public class NotifyManager {
             case DownloadInfo.JS_STATE_PAUSE:
                 contentText = String.format(context.getString(R.string.download_status_pause), progress);
                 mBuilder.setAutoCancel(false);
-                mBuilder.setOngoing(true);
+                mBuilder.setOngoing(false);
                 break;
             case DownloadInfo.JS_STATE_WAIT:
                 contentText = context.getString(R.string.download_status_wait);
                 mBuilder.setAutoCancel(false);
-                mBuilder.setOngoing(true);
+                mBuilder.setOngoing(false);
                 break;
             default:
                 break;
         }
 
+
         PendingIntent contentIntent = getPendingIntent(context, downloadInfo);
         mBuilder.setSmallIcon(R.drawable.icon_notification);
         mBuilder.setContentIntent(contentIntent);
         mBuilder.setContentTitle(downloadInfo.getName());
-        mBuilder.setSubText("SubText");
+        //mBuilder.setSubText("SubText");
         mBuilder.setContentText(contentText);
         mBuilder.setProgress(100, progress, false);
 
@@ -126,7 +126,6 @@ public class NotifyManager {
         }
 
         if (mNotificationManager != null) {
-            Log.d(TAG, "updateNotification: name" + downloadInfo.getName() + "  id:" + downloadInfo.getId());
             mNotificationManager.notify(downloadInfo.getId(), mBuilder.build());
         }
     }
@@ -151,5 +150,6 @@ public class NotifyManager {
             Log.e(TAG, "cancel: error", e);
         }
     }
+
 
 }

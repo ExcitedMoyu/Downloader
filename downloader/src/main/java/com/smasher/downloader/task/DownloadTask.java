@@ -241,7 +241,6 @@ public class DownloadTask implements Runnable {
                     time = System.currentTimeMillis();
                     percentLast = percent;
                     sendMessage();
-                    Log.d(TAG, "downLoadAPK: progress" + downloadInfo.getProgress());
                 }
 
                 accessFile.write(buffer, 0, offset);

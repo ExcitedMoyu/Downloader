@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -19,6 +20,7 @@ import com.smasher.downloader.entity.DownloadInfo;
 import com.smasher.downloader.entity.RequestInfo;
 import com.smasher.downloader.execute.DownloadExecutor;
 import com.smasher.downloader.handler.WeakReferenceHandler;
+import com.smasher.downloader.listener.DownloadListener;
 import com.smasher.downloader.manager.IconManager;
 import com.smasher.downloader.manager.NotifyManager;
 import com.smasher.downloader.task.DownloadTask;
@@ -50,6 +52,7 @@ public class DownloadService extends Service implements Handler.Callback {
     private HashMap<String, DownloadTask> tasks = new HashMap<>();
     private WeakReferenceHandler mHandler;
     private String environmentNotWifi;
+    private DownloadListener mDownloadListener;
 
     private DownloadExecutor mExecutor = new DownloadExecutor(
             DownloadConfig.CORE_POOL_SIZE,
@@ -69,7 +72,7 @@ public class DownloadService extends Service implements Handler.Callback {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return new DownloadBinder();
     }
 
     /**
@@ -113,8 +116,18 @@ public class DownloadService extends Service implements Handler.Callback {
         super.onDestroy();
     }
 
-    private void dispatch(RequestInfo request) {
 
+    public void setListener(DownloadListener listener) {
+        mDownloadListener = listener;
+    }
+
+
+    /**
+     * 分发处理请求实践
+     *
+     * @param request request
+     */
+    private void dispatch(RequestInfo request) {
         DownloadInfo info = request.getDownloadInfo();
         int requestType = request.getCommand();
 
@@ -201,7 +214,7 @@ public class DownloadService extends Service implements Handler.Callback {
 
 
     /**
-     * 打开游戏
+     * 打开应用
      *
      * @param downloadInfo 下载信息
      */
@@ -245,7 +258,6 @@ public class DownloadService extends Service implements Handler.Callback {
 
     private void executeDownload(DownloadTask task) {
         mExecutor.executeTask(task);
-//        ThreadPool.getInstance(ThreadPool.PRIORITY_GAME_DOWNLOAD).execute(task);
     }
 
     private void executeNotification(DownloadInfo info) {
@@ -290,27 +302,34 @@ public class DownloadService extends Service implements Handler.Callback {
                 break;
             case DownloadInfo.JS_STATE_WAIT:
                 executeNotification(downloadInfo);
+                mDownloadListener.onDownLoadWait(downloadInfo);
                 break;
             case DownloadInfo.JS_STATE_DOWNLOAD_PRE:
                 executeNotification(downloadInfo);
+                mDownloadListener.onDownLoadProgress(downloadInfo);
                 break;
             case DownloadInfo.JS_STATE_GET_TOTAL:
                 executeSaveLength(downloadInfo);
+                mDownloadListener.onDownLoadProgress(downloadInfo);
                 break;
             case DownloadInfo.JS_STATE_DOWNLOADING:
                 executeNotification(downloadInfo);
+                mDownloadListener.onDownLoadProgress(downloadInfo);
                 break;
             case DownloadInfo.JS_STATE_PAUSE:
                 executeNotification(downloadInfo);
+                mDownloadListener.onDownLoadPause(downloadInfo);
                 break;
             case DownloadInfo.JS_STATE_FINISH:
                 executeNotification(downloadInfo);
                 if (needInstall(downloadInfo)) {
                     install(downloadInfo);
                 }
+                mDownloadListener.onDownLoadFinished(downloadInfo);
                 break;
             case DownloadInfo.JS_STATE_FAILED:
                 executeNotification(downloadInfo);
+                mDownloadListener.onDownLoadError(downloadInfo);
                 break;
             case DownloadInfo.JS_STATE_INSTALLED:
                 break;
@@ -332,4 +351,15 @@ public class DownloadService extends Service implements Handler.Callback {
         editor.putLong(downloadInfo.getFullName(), downloadInfo.getTotal());
         editor.apply();
     }
+
+
+    public class DownloadBinder extends Binder {
+
+        public DownloadService getService() {
+            return DownloadService.this;
+        }
+
+    }
+
+
 }
