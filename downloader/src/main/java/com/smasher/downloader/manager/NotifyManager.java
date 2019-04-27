@@ -1,5 +1,6 @@
 package com.smasher.downloader.manager;
 
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -30,6 +31,12 @@ public class NotifyManager {
     private NotificationManager mNotificationManager;
     private NotificationCompat.Builder mBuilder;
 
+    private static NotificationChannel channel;
+
+    private String NOTIFICATION_CHANNEL_ID = "download_channelId";
+    private String NOTIFICATION_CHANNEL_NAME = "download_message";
+    private String DOWNLOAD_ACTION_NOTIFICATION_CLICK = "DOWNLOAD_ACTION_NOTIFICATION_CLICK";
+
     private volatile static NotifyManager singleton;
 
     public static NotifyManager getSingleton(Context context) {
@@ -45,11 +52,12 @@ public class NotifyManager {
 
 
     private NotifyManager(Context context) {
+        NOTIFICATION_CHANNEL_NAME = context.getString(R.string.download_notification_name);
         mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            mNotificationManager.createNotificationChannel(DownloadConfig.getNotificationChannel());
+            mNotificationManager.createNotificationChannel(getNotificationChannel());
         }
-        mBuilder = new NotificationCompat.Builder(context, DownloadConfig.NOTIFICATION_CHANNEL_ID);
+        mBuilder = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID);
 
     }
 
@@ -133,7 +141,7 @@ public class NotifyManager {
     private PendingIntent getPendingIntent(Context context, DownloadInfo downloadInfo) {
         //当点击消息时就会向系统发送openintent意图
         Intent intent = new Intent();
-        intent.setAction(DownloadConfig.DOWNLOAD_ACTION_NOTIFICATION_CLICK);
+        intent.setAction(DOWNLOAD_ACTION_NOTIFICATION_CLICK);
         intent.putExtra("name", downloadInfo.getName());
         intent.putExtra("url", downloadInfo.getActionUrl());
         return PendingIntent.getBroadcast(context, downloadInfo.getId(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -149,6 +157,25 @@ public class NotifyManager {
         } catch (Exception e) {
             Log.e(TAG, "cancel: error", e);
         }
+    }
+
+
+    private NotificationChannel getNotificationChannel() {
+        if (channel == null) {
+            return createNotificationChannel();
+        }
+        return channel;
+    }
+
+
+    private NotificationChannel createNotificationChannel() {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            return channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
+        } else {
+            Log.e(TAG, "Android版本低于26，无需创建通知渠道");
+        }
+        return null;
     }
 
 

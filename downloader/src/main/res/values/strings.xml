@@ -10,4 +10,6 @@
     <string name="download_tip_un_wifi">溫馨提示：您现在处于非WIFI环境~</string>
     <string name="download_status_wait">下载排队中&#8230;</string>
     <string name="download_status_join">下载任务已进入队列</string>
+
+    <string name="download_notification_name">下载消息</string>
 </resources>
