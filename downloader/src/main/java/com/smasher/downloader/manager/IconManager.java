@@ -65,7 +65,7 @@ public class IconManager {
             return;
         }
 
-        mExecutor.executeRunable(new Runnable() {
+        mExecutor.executeRunnable(new Runnable() {
             @Override
             public void run() {
                 OkHttpClient mClient = new OkHttpClient.Builder()

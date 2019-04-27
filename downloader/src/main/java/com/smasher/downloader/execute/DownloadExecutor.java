@@ -29,7 +29,7 @@ public class DownloadExecutor extends ThreadPoolExecutor {
     }
 
 
-    public void executeRunable(Runnable runnable) {
+    public void executeRunnable(Runnable runnable) {
         execute(runnable);
     }
 }
