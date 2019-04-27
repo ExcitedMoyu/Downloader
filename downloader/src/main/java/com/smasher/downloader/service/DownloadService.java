@@ -302,15 +302,21 @@ public class DownloadService extends Service implements Handler.Callback {
                 break;
             case DownloadInfo.JS_STATE_WAIT:
                 executeNotification(downloadInfo);
-                mDownloadListener.onDownLoadWait(downloadInfo);
+                if (mDownloadListener != null) {
+                    mDownloadListener.onDownLoadWait(downloadInfo);
+                }
                 break;
             case DownloadInfo.JS_STATE_DOWNLOAD_PRE:
                 executeNotification(downloadInfo);
-                mDownloadListener.onDownLoadProgress(downloadInfo);
+                if (mDownloadListener != null) {
+                    mDownloadListener.onDownLoadProgress(downloadInfo);
+                }
                 break;
             case DownloadInfo.JS_STATE_GET_TOTAL:
                 executeSaveLength(downloadInfo);
-                mDownloadListener.onDownLoadProgress(downloadInfo);
+                if (mDownloadListener != null) {
+                    mDownloadListener.onDownLoadProgress(downloadInfo);
+                }
                 break;
             case DownloadInfo.JS_STATE_DOWNLOADING:
                 executeNotification(downloadInfo);
@@ -318,18 +324,24 @@ public class DownloadService extends Service implements Handler.Callback {
                 break;
             case DownloadInfo.JS_STATE_PAUSE:
                 executeNotification(downloadInfo);
-                mDownloadListener.onDownLoadPause(downloadInfo);
+                if (mDownloadListener != null) {
+                    mDownloadListener.onDownLoadPause(downloadInfo);
+                }
                 break;
             case DownloadInfo.JS_STATE_FINISH:
                 executeNotification(downloadInfo);
                 if (needInstall(downloadInfo)) {
                     install(downloadInfo);
                 }
-                mDownloadListener.onDownLoadFinished(downloadInfo);
+                if (mDownloadListener != null) {
+                    mDownloadListener.onDownLoadFinished(downloadInfo);
+                }
                 break;
             case DownloadInfo.JS_STATE_FAILED:
                 executeNotification(downloadInfo);
-                mDownloadListener.onDownLoadError(downloadInfo);
+                if (mDownloadListener != null) {
+                    mDownloadListener.onDownLoadError(downloadInfo);
+                }
                 break;
             case DownloadInfo.JS_STATE_INSTALLED:
                 break;
