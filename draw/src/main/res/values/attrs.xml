@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="BlurMaskFilterView">
+        <attr name="blur_text" format="string"/>
+        <attr name="blur_text_padding" format="dimension"/>
+        <attr name="blur_width" format="dimension"/>
+        <attr name="blur_color" format="color"/>
+        <attr name="blur_radius" format="dimension"/>
+    </declare-styleable>
+
+
+</resources>
