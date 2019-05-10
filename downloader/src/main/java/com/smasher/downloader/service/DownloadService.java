@@ -61,6 +61,7 @@ public class DownloadService extends Service implements Handler.Callback {
             TimeUnit.MILLISECONDS,
             new LinkedBlockingDeque<Runnable>());
 
+    private boolean enableNotification = false;
 
     @Override
     public void onCreate() {
@@ -119,6 +120,13 @@ public class DownloadService extends Service implements Handler.Callback {
 
     public void setListener(DownloadListener listener) {
         mDownloadListener = listener;
+    }
+
+    public void setNotificationEnable(boolean enable) {
+        enableNotification = enable;
+        if (!enable) {
+            NotifyManager.getSingleton(this).cancelAll();
+        }
     }
 
 
@@ -296,40 +304,39 @@ public class DownloadService extends Service implements Handler.Callback {
     public boolean handleMessage(Message msg) {
         DownloadInfo downloadInfo = (DownloadInfo) msg.obj;
         int what = msg.what;
+
+        if (enableNotification) {
+            executeNotification(downloadInfo);
+        }
+
         switch (what) {
             case DownloadInfo.JS_STATE_NORMAL:
                 //do nothing
                 break;
             case DownloadInfo.JS_STATE_WAIT:
-                executeNotification(downloadInfo);
                 if (mDownloadListener != null) {
                     mDownloadListener.onDownLoadWait(downloadInfo);
                 }
                 break;
             case DownloadInfo.JS_STATE_DOWNLOAD_PRE:
-                executeNotification(downloadInfo);
                 if (mDownloadListener != null) {
                     mDownloadListener.onDownLoadProgress(downloadInfo);
                 }
                 break;
             case DownloadInfo.JS_STATE_GET_TOTAL:
-                executeSaveLength(downloadInfo);
                 if (mDownloadListener != null) {
                     mDownloadListener.onDownLoadProgress(downloadInfo);
                 }
                 break;
             case DownloadInfo.JS_STATE_DOWNLOADING:
-                executeNotification(downloadInfo);
                 mDownloadListener.onDownLoadProgress(downloadInfo);
                 break;
             case DownloadInfo.JS_STATE_PAUSE:
-                executeNotification(downloadInfo);
                 if (mDownloadListener != null) {
                     mDownloadListener.onDownLoadPause(downloadInfo);
                 }
                 break;
             case DownloadInfo.JS_STATE_FINISH:
-                executeNotification(downloadInfo);
                 if (needInstall(downloadInfo)) {
                     install(downloadInfo);
                 }
@@ -338,7 +345,6 @@ public class DownloadService extends Service implements Handler.Callback {
                 }
                 break;
             case DownloadInfo.JS_STATE_FAILED:
-                executeNotification(downloadInfo);
                 if (mDownloadListener != null) {
                     mDownloadListener.onDownLoadError(downloadInfo);
                 }

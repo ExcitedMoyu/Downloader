@@ -34,9 +34,6 @@ public class DownloadConfig {
     public static String SAVE_PATH = "";
 
 
-
-
-
     /**
      * 初始化
      *
@@ -49,9 +46,6 @@ public class DownloadConfig {
             SAVE_PATH = AppPath.getDownloadPath(application);
         }
     }
-
-
-
 
 
 }

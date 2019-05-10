@@ -32,6 +32,8 @@ public class DownloadManager implements DownloadListener {
 
     private volatile static DownloadManager mInstance;
 
+    private boolean enableNotification;
+
     public static DownloadManager getInstance() {
         if (mInstance == null) {
             synchronized (DownloadManager.class) {
@@ -110,6 +112,14 @@ public class DownloadManager implements DownloadListener {
 
 
         unbindService(context);
+    }
+
+
+    public void setNotificationEnable(boolean enable) {
+        enableNotification = enable;
+        if (mService != null) {
+            mService.setNotificationEnable(enable);
+        }
     }
 
 

@@ -148,11 +148,21 @@ public class NotifyManager {
     }
 
 
-    public void cancel(Context context, int id) {
+    public void cancel(int id) {
         try {
-            NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             if (mNotificationManager != null) {
                 mNotificationManager.cancel(id);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "cancel: error", e);
+        }
+    }
+
+
+    public void cancelAll() {
+        try {
+            if (mNotificationManager != null) {
+                mNotificationManager.cancelAll();
             }
         } catch (Exception e) {
             Log.e(TAG, "cancel: error", e);
