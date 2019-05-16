@@ -11,10 +11,10 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.smasher.downloader.DownloadConfig;
+import androidx.annotation.Nullable;
+
 import com.smasher.downloader.R;
 import com.smasher.downloader.entity.DownloadInfo;
 import com.smasher.downloader.entity.RequestInfo;
@@ -30,8 +30,6 @@ import com.smasher.downloader.util.NetworkUtil;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author matao
@@ -42,7 +40,6 @@ public class DownloadService extends Service implements Handler.Callback {
     public static final String SERVICE_INTENT_EXTRA = "service_intent_extra";
 
     private static final String TAG = "[DL]DownloadService";
-
     private static boolean canRequest = true;
     private static boolean showTip = true;
 
@@ -54,12 +51,7 @@ public class DownloadService extends Service implements Handler.Callback {
     private String environmentNotWifi;
     private DownloadListener mDownloadListener;
 
-    private DownloadExecutor mExecutor = new DownloadExecutor(
-            DownloadConfig.CORE_POOL_SIZE,
-            DownloadConfig.MAX_POOL_SIZE,
-            DownloadConfig.KEEP_ALIVE_TIME,
-            TimeUnit.MILLISECONDS,
-            new LinkedBlockingDeque<Runnable>());
+    private DownloadExecutor mExecutor;
 
     private boolean enableNotification = false;
 
@@ -68,6 +60,8 @@ public class DownloadService extends Service implements Handler.Callback {
         super.onCreate();
         environmentNotWifi = getString(R.string.download_tip_un_wifi);
         mHandler = new WeakReferenceHandler(this);
+        mExecutor=DownloadExecutor.getDefaultExecutor();
+        NotifyManager.getSingleton().init(this);
     }
 
     @Nullable
@@ -125,7 +119,7 @@ public class DownloadService extends Service implements Handler.Callback {
     public void setNotificationEnable(boolean enable) {
         enableNotification = enable;
         if (!enable) {
-            NotifyManager.getSingleton(this).cancelAll();
+            NotifyManager.getSingleton().cancelAll();
         }
     }
 
@@ -198,7 +192,11 @@ public class DownloadService extends Service implements Handler.Callback {
                 task.stop();
             }
         }
-        executeNotification(info);
+
+        Message message = Message.obtain();
+        message.obj = info;
+        message.what = info.getStatus();
+        mHandler.sendMessage(message);
     }
 
 
@@ -287,12 +285,12 @@ public class DownloadService extends Service implements Handler.Callback {
 
     private void updateNotification(Context context, DownloadInfo info) {
         Bitmap icon = IconManager.getSingleton().getIcon(info.getIconUrl());
-        NotifyManager.getSingleton(this).updateNotification(context, info, icon);
+        NotifyManager.getSingleton().updateNotification(context, info, icon);
     }
 
 
     private void sendToast(String message) {
-        String action = DownloadConfig.DOWNLOAD_ACTION_TOAST;
+        String action = NotifyManager.DOWNLOAD_ACTION_TOAST;
         Intent intent = new Intent();
         intent.setAction(action);
         intent.putExtra(action, message);
@@ -372,11 +370,9 @@ public class DownloadService extends Service implements Handler.Callback {
 
 
     public class DownloadBinder extends Binder {
-
         public DownloadService getService() {
             return DownloadService.this;
         }
-
     }
 
 

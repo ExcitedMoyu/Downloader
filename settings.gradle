@@ -1,1 +1,2 @@
-include ':example', ':downloader'
+include ':example',
+        ':downloader'

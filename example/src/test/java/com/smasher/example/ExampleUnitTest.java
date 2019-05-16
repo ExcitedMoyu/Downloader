@@ -1,4 +1,4 @@
-package com.smasher.downloader;
+package com.smasher.example;
 
 import org.junit.Test;
 

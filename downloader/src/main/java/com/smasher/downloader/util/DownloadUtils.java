@@ -8,13 +8,14 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
-import android.support.v4.content.FileProvider;
+
+import androidx.core.content.FileProvider;
+
 import android.text.TextUtils;
 import android.util.Log;
 
-
-import com.smasher.downloader.DownloadConfig;
 import com.smasher.downloader.entity.DownloadInfo;
+import com.smasher.downloader.manager.DownloadManager;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -24,6 +25,7 @@ import java.util.List;
 /**
  * utils
  *
+ * @author matao
  * @date 2017/8/15
  */
 public class DownloadUtils {
@@ -105,7 +107,7 @@ public class DownloadUtils {
         if (!TextUtils.isEmpty(downloadInfo.getTargetPath())) {
             return downloadInfo.getTargetPath();
         }
-        return DownloadConfig.SAVE_PATH;
+        return DownloadManager.getInstance().getSavePath();
 
     }
 

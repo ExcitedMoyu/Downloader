@@ -7,12 +7,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Build;
-import android.support.v4.app.NotificationCompat;
+
+import androidx.core.app.NotificationCompat;
+
 import android.util.Log;
 import android.util.SparseArray;
 import android.widget.RemoteViews;
 
-import com.smasher.downloader.DownloadConfig;
 import com.smasher.downloader.R;
 import com.smasher.downloader.entity.DownloadInfo;
 
@@ -24,6 +25,7 @@ import com.smasher.downloader.entity.DownloadInfo;
  * @date 2017/8/15
  */
 public class NotifyManager {
+    public static final String DOWNLOAD_ACTION_TOAST = "DOWNLOAD_ACTION_TOAST";
 
     private static final String TAG = "[DL]Notification";
     private SparseArray<RemoteViews> remoteViews = new SparseArray<>();
@@ -32,18 +34,19 @@ public class NotifyManager {
     private NotificationCompat.Builder mBuilder;
 
     private static NotificationChannel channel;
-
     private String NOTIFICATION_CHANNEL_ID = "download_channelId";
     private String NOTIFICATION_CHANNEL_NAME = "download_message";
     private String DOWNLOAD_ACTION_NOTIFICATION_CLICK = "DOWNLOAD_ACTION_NOTIFICATION_CLICK";
 
+    private String packageName;
+
     private volatile static NotifyManager singleton;
 
-    public static NotifyManager getSingleton(Context context) {
+    public static NotifyManager getSingleton() {
         if (singleton == null) {
             synchronized (NotifyManager.class) {
                 if (singleton == null) {
-                    singleton = new NotifyManager(context);
+                    singleton = new NotifyManager();
                 }
             }
         }
@@ -51,7 +54,11 @@ public class NotifyManager {
     }
 
 
-    private NotifyManager(Context context) {
+    private NotifyManager() {
+    }
+
+
+    public void init(Context context) {
         NOTIFICATION_CHANNEL_NAME = context.getString(R.string.download_notification_name);
         mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -59,52 +66,26 @@ public class NotifyManager {
         }
         mBuilder = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID);
 
+        packageName = context.getPackageName();
     }
 
 
+    /**
+     * 更新通知
+     *
+     * @param context      context
+     * @param downloadInfo downloadInfo
+     * @param icon         icon
+     */
     public void updateNotification(Context context, DownloadInfo downloadInfo, Bitmap icon) {
-        //下载进度
-        int progress = 0;
-        if (downloadInfo.getTotal() != 0) {
-            progress = (int) (downloadInfo.getProgress() * 100 / downloadInfo.getTotal());
+
+        if (mNotificationManager == null) {
+            Log.d(TAG, "updateNotification: is not init yet");
+            return;
         }
 
-        String contentText = "";
-        switch (downloadInfo.getStatus()) {
-            case DownloadInfo.JS_STATE_FAILED:
-                contentText = context.getString(R.string.download_status_failed);
-                mBuilder.setAutoCancel(true);
-                mBuilder.setOngoing(false);
-                break;
-            case DownloadInfo.JS_STATE_GET_TOTAL:
-            case DownloadInfo.JS_STATE_DOWNLOAD_PRE:
-            case DownloadInfo.JS_STATE_DOWNLOADING:
-                contentText = String.format(context.getString(R.string.download_status_downloading), progress);
-                if (progress == 0) {
-                    contentText = context.getString(R.string.download_status_init);
-                }
-                mBuilder.setAutoCancel(false);
-                mBuilder.setOngoing(true);
-                break;
-            case DownloadInfo.JS_STATE_FINISH:
-                contentText = context.getString(R.string.download_status_success);
-                mBuilder.setAutoCancel(true);
-                mBuilder.setOngoing(false);
-                break;
-            case DownloadInfo.JS_STATE_PAUSE:
-                contentText = String.format(context.getString(R.string.download_status_pause), progress);
-                mBuilder.setAutoCancel(false);
-                mBuilder.setOngoing(false);
-                break;
-            case DownloadInfo.JS_STATE_WAIT:
-                contentText = context.getString(R.string.download_status_wait);
-                mBuilder.setAutoCancel(false);
-                mBuilder.setOngoing(false);
-                break;
-            default:
-                break;
-        }
-
+        String contentText = getString(context, downloadInfo);
+        int progress = getProgress(downloadInfo);
 
         PendingIntent contentIntent = getPendingIntent(context, downloadInfo);
         mBuilder.setSmallIcon(R.drawable.icon_notification);
@@ -114,11 +95,49 @@ public class NotifyManager {
         mBuilder.setContentText(contentText);
         mBuilder.setProgress(100, progress, false);
 
+        setBuilderSetting(downloadInfo);
+
+        RemoteViews remoteView = getRemoteViews(downloadInfo, icon, contentText);
+        mBuilder.setContent(remoteView);
+
+        if (mNotificationManager != null) {
+            mNotificationManager.notify(downloadInfo.getId(), mBuilder.build());
+        }
+    }
+
+    /**
+     * 下载进度
+     *
+     * @param downloadInfo downloadInfo
+     * @return Progress
+     */
+    private int getProgress(DownloadInfo downloadInfo) {
+
+        int progress = 0;
+        if (downloadInfo.getTotal() != 0) {
+            progress = (int) (downloadInfo.getProgress() * 100 / downloadInfo.getTotal());
+        }
+        return progress;
+    }
+
+    /**
+     * 自定义view
+     *
+     * @param downloadInfo downloadInfo
+     * @param icon         icon
+     * @param contentText  contentText
+     * @return RemoteViews
+     */
+    private RemoteViews getRemoteViews(DownloadInfo downloadInfo, Bitmap icon, String contentText) {
+        RemoteViews remoteView = null;
+
+        int progress = getProgress(downloadInfo);
+
         try {
             if (icon != null) {
-                RemoteViews remoteView = remoteViews.get(downloadInfo.getId());
+                remoteView = remoteViews.get(downloadInfo.getId());
                 if (remoteView == null) {
-                    remoteView = new RemoteViews(context.getPackageName(), R.layout.notification_userdefine_layout);
+                    remoteView = new RemoteViews(packageName, R.layout.notification_userdefine_layout);
                     remoteViews.put(downloadInfo.getId(), remoteView);
                 }
 
@@ -127,17 +146,87 @@ public class NotifyManager {
                 remoteView.setProgressBar(R.id.progress, 100, progress, false);
                 remoteView.setTextViewText(R.id.content_tv, contentText);
 
-                mBuilder.setContent(remoteView);
             }
         } catch (Exception ex) {
             Log.e(TAG, "updateNotification: error", ex);
         }
-
-        if (mNotificationManager != null) {
-            mNotificationManager.notify(downloadInfo.getId(), mBuilder.build());
-        }
+        return remoteView;
     }
 
+
+    /**
+     * 获取 显示文字
+     *
+     * @param context      context
+     * @param downloadInfo downloadInfo
+     * @return String
+     */
+    private String getString(Context context, DownloadInfo downloadInfo) {
+        int progress = getProgress(downloadInfo);
+        String contentText = "";
+        switch (downloadInfo.getStatus()) {
+            case DownloadInfo.JS_STATE_FAILED:
+                contentText = context.getString(R.string.download_status_failed);
+                break;
+            case DownloadInfo.JS_STATE_GET_TOTAL:
+            case DownloadInfo.JS_STATE_DOWNLOAD_PRE:
+            case DownloadInfo.JS_STATE_DOWNLOADING:
+                contentText = String.format(context.getString(R.string.download_status_downloading), progress);
+                if (progress == 0) {
+                    contentText = context.getString(R.string.download_status_init);
+                }
+                break;
+            case DownloadInfo.JS_STATE_FINISH:
+                contentText = context.getString(R.string.download_status_success);
+                break;
+            case DownloadInfo.JS_STATE_PAUSE:
+                contentText = String.format(context.getString(R.string.download_status_pause), progress);
+                break;
+            case DownloadInfo.JS_STATE_WAIT:
+                contentText = context.getString(R.string.download_status_wait);
+                break;
+            default:
+                break;
+        }
+        return contentText;
+    }
+
+
+    private void setBuilderSetting(DownloadInfo downloadInfo) {
+        if (mBuilder == null) {
+            return;
+        }
+        switch (downloadInfo.getStatus()) {
+            case DownloadInfo.JS_STATE_FAILED:
+            case DownloadInfo.JS_STATE_FINISH:
+                mBuilder.setAutoCancel(true);
+                mBuilder.setOngoing(false);
+                break;
+            case DownloadInfo.JS_STATE_GET_TOTAL:
+            case DownloadInfo.JS_STATE_DOWNLOAD_PRE:
+            case DownloadInfo.JS_STATE_DOWNLOADING:
+                mBuilder.setAutoCancel(false);
+                mBuilder.setOngoing(true);
+                break;
+            case DownloadInfo.JS_STATE_PAUSE:
+            case DownloadInfo.JS_STATE_WAIT:
+                mBuilder.setAutoCancel(false);
+                mBuilder.setOngoing(false);
+                break;
+            default:
+                break;
+        }
+
+    }
+
+
+    /**
+     * pendingIntent
+     *
+     * @param context      context
+     * @param downloadInfo downloadInfo
+     * @return PendingIntent
+     */
     private PendingIntent getPendingIntent(Context context, DownloadInfo downloadInfo) {
         //当点击消息时就会向系统发送openintent意图
         Intent intent = new Intent();

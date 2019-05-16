@@ -1,14 +1,20 @@
-package com.smasher.downloader;
+package com.smasher.example;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.widget.Button;
+
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
+/**
+ * @author matao
+ */
 public class Main2Activity extends AppCompatActivity {
 
     @BindView(R.id.btn)

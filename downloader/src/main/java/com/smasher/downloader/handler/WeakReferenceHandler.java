@@ -7,7 +7,6 @@ import android.os.Message;
 import java.lang.ref.WeakReference;
 
 /**
- *
  * @author moyu
  */
 public class WeakReferenceHandler extends Handler {

@@ -6,13 +6,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+import android.text.TextUtils;
 import android.util.Log;
-
 
 import com.smasher.downloader.entity.DownloadInfo;
 import com.smasher.downloader.entity.RequestInfo;
 import com.smasher.downloader.listener.DownloadListener;
 import com.smasher.downloader.listener.DownloadObserver;
+import com.smasher.downloader.path.AppPath;
 import com.smasher.downloader.service.DownloadService;
 
 import java.util.ArrayList;
@@ -27,12 +28,13 @@ public class DownloadManager implements DownloadListener {
 
     private static final String TAG = "[DL]DownLoadMG";
 
+    private volatile static DownloadManager mInstance;
+
     private ArrayList<RequestInfo> requests = new ArrayList<>();
     private List<DownloadObserver> mObservers = new ArrayList<>();
 
-    private volatile static DownloadManager mInstance;
-
     private boolean enableNotification;
+    private String mSavePath;
 
     public static DownloadManager getInstance() {
         if (mInstance == null) {
@@ -46,38 +48,21 @@ public class DownloadManager implements DownloadListener {
     }
 
     private DownloadManager() {
-
     }
 
 
-    private DownloadService mService;
-
-    private ServiceConnection mConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            DownloadService.DownloadBinder binder = (DownloadService.DownloadBinder) service;
-            mService = binder.getService();
-            mService.setListener(DownloadManager.this);
+    /**
+     * 初始化
+     *
+     * @param savePath 默认的保存地址
+     */
+    public void init(Context context, String savePath) {
+        if (TextUtils.isEmpty(savePath)) {
+            AppPath.init("Download[DL]");
+            mSavePath = AppPath.getDownloadPath(context);
+        } else {
+            mSavePath = savePath;
         }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            mService = null;
-        }
-    };
-
-
-    private void bindService(Context context) {
-        Intent intent = new Intent();
-        intent.setClass(context, DownloadService.class);
-        context.bindService(intent, mConnection, Service.BIND_AUTO_CREATE);
-    }
-
-
-    private void unbindService(Context context) {
-        Intent intent = new Intent();
-        intent.setClass(context, DownloadService.class);
-        context.unbindService(mConnection);
     }
 
 
@@ -109,8 +94,6 @@ public class DownloadManager implements DownloadListener {
                 mObservers.remove(observer);
             }
         }
-
-
         unbindService(context);
     }
 
@@ -122,6 +105,10 @@ public class DownloadManager implements DownloadListener {
         }
     }
 
+
+    public String getSavePath() {
+        return mSavePath;
+    }
 
     /**
      * 提交  下载/暂停  等任务.(提交就意味着开始执行生效)
@@ -174,6 +161,38 @@ public class DownloadManager implements DownloadListener {
         request.setCommand(requestType);
         request.setDownloadInfo(info);
         return request;
+    }
+
+
+    private DownloadService mService;
+
+    private ServiceConnection mConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            DownloadService.DownloadBinder binder = (DownloadService.DownloadBinder) service;
+            mService = binder.getService();
+            mService.setListener(DownloadManager.this);
+            mService.setNotificationEnable(enableNotification);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mService = null;
+        }
+    };
+
+
+    private void bindService(Context context) {
+        Intent intent = new Intent();
+        intent.setClass(context, DownloadService.class);
+        context.bindService(intent, mConnection, Service.BIND_AUTO_CREATE);
+    }
+
+
+    private void unbindService(Context context) {
+        Intent intent = new Intent();
+        intent.setClass(context, DownloadService.class);
+        context.unbindService(mConnection);
     }
 
 

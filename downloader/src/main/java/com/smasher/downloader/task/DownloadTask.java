@@ -4,17 +4,16 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 
-
-import com.smasher.downloader.DownloadConfig;
 import com.smasher.downloader.entity.DownloadInfo;
 import com.smasher.downloader.handler.WeakReferenceHandler;
+import com.smasher.downloader.manager.DownloadManager;
+import com.smasher.downloader.manager.OkHttpClientManager;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
@@ -39,10 +38,7 @@ public class DownloadTask implements Runnable {
     public DownloadTask(DownloadInfo info, WeakReferenceHandler handler) {
         this.mDownloadInfo = info;
         this.mHandler = handler;
-        this.mClient = new OkHttpClient.Builder()
-                .connectTimeout(DownloadConfig.SOCKET_TIMEOUT, TimeUnit.MILLISECONDS)
-                .readTimeout(DownloadConfig.SOCKET_TIMEOUT, TimeUnit.MILLISECONDS)
-                .build();
+        this.mClient = OkHttpClientManager.getInstance().getClient();
     }
 
 
@@ -92,7 +88,7 @@ public class DownloadTask implements Runnable {
                     .build();
             try {
                 Response response = mClient.newCall(request).execute();
-                if (response != null && response.isSuccessful()) {
+                if (response.isSuccessful()) {
                     if (response.body() != null) {
                         contentLength = response.body().contentLength();
                     }
@@ -292,7 +288,7 @@ public class DownloadTask implements Runnable {
         if (!TextUtils.isEmpty(downloadInfo.getTargetPath())) {
             return downloadInfo.getTargetPath();
         }
-        return DownloadConfig.SAVE_PATH;
+        return DownloadManager.getInstance().getSavePath();
     }
 
 

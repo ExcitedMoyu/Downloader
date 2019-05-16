@@ -5,15 +5,12 @@ import android.graphics.BitmapFactory;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.smasher.downloader.DownloadConfig;
 import com.smasher.downloader.execute.DownloadExecutor;
 import com.smasher.downloader.util.DownloadUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Hashtable;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
@@ -29,6 +26,7 @@ public class IconManager {
     private static final String TAG = "[DL]IconManager";
 
     private Hashtable<String, Bitmap> icons;
+    private DownloadExecutor mExecutor;
 
     private volatile static IconManager singleton;
 
@@ -46,17 +44,8 @@ public class IconManager {
 
     private IconManager() {
         icons = new Hashtable<>();
+        mExecutor = DownloadExecutor.getDefaultExecutor();
     }
-
-
-
-    private DownloadExecutor mExecutor = new DownloadExecutor(
-            DownloadConfig.CORE_POOL_SIZE,
-            DownloadConfig.MAX_POOL_SIZE,
-            DownloadConfig.KEEP_ALIVE_TIME,
-            TimeUnit.MILLISECONDS,
-            new LinkedBlockingDeque<Runnable>());
-
 
 
     public void loadIcon(final String url) {
@@ -68,11 +57,7 @@ public class IconManager {
         mExecutor.executeRunnable(new Runnable() {
             @Override
             public void run() {
-                OkHttpClient mClient = new OkHttpClient.Builder()
-                        .connectTimeout(DownloadConfig.SOCKET_TIMEOUT, TimeUnit.MILLISECONDS)
-                        .readTimeout(DownloadConfig.SOCKET_TIMEOUT, TimeUnit.MILLISECONDS)
-                        .build();
-
+                OkHttpClient mClient = OkHttpClientManager.getInstance().getClient();
 
                 Bitmap icon = null;
                 InputStream iconIs = null;
