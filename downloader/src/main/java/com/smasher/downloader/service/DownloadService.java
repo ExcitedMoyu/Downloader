@@ -327,7 +327,9 @@ public class DownloadService extends Service implements Handler.Callback {
                 }
                 break;
             case DownloadInfo.JS_STATE_DOWNLOADING:
-                mDownloadListener.onDownLoadProgress(downloadInfo);
+                if (mDownloadListener != null) {
+                    mDownloadListener.onDownLoadProgress(downloadInfo);
+                }
                 break;
             case DownloadInfo.JS_STATE_PAUSE:
                 if (mDownloadListener != null) {

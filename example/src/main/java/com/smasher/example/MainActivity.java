@@ -64,6 +64,7 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver 
         DownloadManager.getInstance().init(this, "");
         DownloadManager.getInstance().registerObserver(this, this);
         DownloadManager.getInstance().setNotificationEnable(true);
+        DownloadManager.getInstance().setNotificationIcon(R.drawable.ic_stat_name);
     }
 
 

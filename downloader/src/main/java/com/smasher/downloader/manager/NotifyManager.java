@@ -8,11 +8,12 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Build;
 
-import androidx.core.app.NotificationCompat;
-
 import android.util.Log;
 import android.util.SparseArray;
 import android.widget.RemoteViews;
+
+import androidx.annotation.RequiresApi;
+import androidx.core.app.NotificationCompat;
 
 import com.smasher.downloader.R;
 import com.smasher.downloader.entity.DownloadInfo;
@@ -33,11 +34,11 @@ public class NotifyManager {
     private NotificationManager mNotificationManager;
     private NotificationCompat.Builder mBuilder;
 
-    private static NotificationChannel channel;
-    private String NOTIFICATION_CHANNEL_ID = "download_channelId";
-    private String NOTIFICATION_CHANNEL_NAME = "download_message";
-    private String DOWNLOAD_ACTION_NOTIFICATION_CLICK = "DOWNLOAD_ACTION_NOTIFICATION_CLICK";
+    private NotificationChannel channel;
+    private static final String NOTIFICATION_CHANNEL_ID = "download_channelId";
+    private static final String DOWNLOAD_ACTION_NOTIFICATION_CLICK = "DOWNLOAD_ACTION_NOTIFICATION_CLICK";
 
+    private String notificationChannelName;
     private String packageName;
 
     private volatile static NotifyManager singleton;
@@ -59,13 +60,12 @@ public class NotifyManager {
 
 
     public void init(Context context) {
-        NOTIFICATION_CHANNEL_NAME = context.getString(R.string.download_notification_name);
+        notificationChannelName = context.getString(R.string.download_notification_name);
         mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            mNotificationManager.createNotificationChannel(getNotificationChannel());
+            mNotificationManager.createNotificationChannel(getNotificationChannel(notificationChannelName));
         }
         mBuilder = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID);
-
         packageName = context.getPackageName();
     }
 
@@ -88,7 +88,11 @@ public class NotifyManager {
         int progress = getProgress(downloadInfo);
 
         PendingIntent contentIntent = getPendingIntent(context, downloadInfo);
-        mBuilder.setSmallIcon(R.drawable.icon_notification);
+
+        int definedId = DownloadManager.getInstance().getNotificationIcon();
+        int iconId = definedId > 0 ? definedId : R.drawable.icon_notification;
+
+        mBuilder.setSmallIcon(iconId);
         mBuilder.setContentIntent(contentIntent);
         mBuilder.setContentTitle(downloadInfo.getName());
         //mBuilder.setSubText("SubText");
@@ -258,23 +262,22 @@ public class NotifyManager {
         }
     }
 
-
-    private NotificationChannel getNotificationChannel() {
+    private NotificationChannel getNotificationChannel(String notificationChannelName) {
         if (channel == null) {
-            return createNotificationChannel();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                return createNotificationChannel(notificationChannelName);
+            }
         }
         return channel;
     }
 
 
-    private NotificationChannel createNotificationChannel() {
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            return channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
-        } else {
-            Log.e(TAG, "Android版本低于26，无需创建通知渠道");
-        }
-        return null;
+    @RequiresApi(Build.VERSION_CODES.O)
+    private NotificationChannel createNotificationChannel(String notificationChannelName) {
+        channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, notificationChannelName, NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setSound(null, null);
+        channel.enableVibration(false);
+        return channel;
     }
 
 

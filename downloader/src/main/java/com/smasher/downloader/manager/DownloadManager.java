@@ -9,6 +9,8 @@ import android.os.IBinder;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.annotation.DrawableRes;
+
 import com.smasher.downloader.entity.DownloadInfo;
 import com.smasher.downloader.entity.RequestInfo;
 import com.smasher.downloader.listener.DownloadListener;
@@ -36,6 +38,9 @@ public class DownloadManager implements DownloadListener {
     private boolean enableNotification;
     private String mSavePath;
 
+    @DrawableRes
+    private int notificationIcon;
+
     public static DownloadManager getInstance() {
         if (mInstance == null) {
             synchronized (DownloadManager.class) {
@@ -57,6 +62,9 @@ public class DownloadManager implements DownloadListener {
      * @param savePath 默认的保存地址
      */
     public void init(Context context, String savePath) {
+        //启动服务
+        startService(context);
+
         if (TextUtils.isEmpty(savePath)) {
             AppPath.init("Download[DL]");
             mSavePath = AppPath.getDownloadPath(context);
@@ -67,22 +75,31 @@ public class DownloadManager implements DownloadListener {
 
 
     /**
+     * 初始化
+     *
+     * @param id 图标Id
+     */
+    public void setNotificationIcon(@DrawableRes int id) {
+        notificationIcon = id;
+    }
+
+
+    public int getNotificationIcon() {
+        return notificationIcon;
+    }
+
+    /**
      * 注册观察者
      */
     public void registerObserver(Context context, DownloadObserver observer) {
-
-        if (mService == null) {
-            Intent intent = new Intent(context, DownloadService.class);
-            context.startService(intent);
-        }
 
         synchronized (mObservers) {
             if (!mObservers.contains(observer)) {
                 mObservers.add(observer);
             }
         }
-
         bindService(context);
+
     }
 
     /**
@@ -102,6 +119,7 @@ public class DownloadManager implements DownloadListener {
         enableNotification = enable;
         if (mService != null) {
             mService.setNotificationEnable(enable);
+            Log.d(TAG, "setNotificationEnable: mService!=null");
         }
     }
 
@@ -173,6 +191,7 @@ public class DownloadManager implements DownloadListener {
             mService = binder.getService();
             mService.setListener(DownloadManager.this);
             mService.setNotificationEnable(enableNotification);
+            Log.d(TAG, "onServiceConnected: " + enableNotification);
         }
 
         @Override
@@ -190,9 +209,27 @@ public class DownloadManager implements DownloadListener {
 
 
     private void unbindService(Context context) {
-        Intent intent = new Intent();
-        intent.setClass(context, DownloadService.class);
-        context.unbindService(mConnection);
+        try {
+            context.unbindService(mConnection);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    private void startService(Context context) {
+        if (mService == null) {
+            Intent intent = new Intent(context, DownloadService.class);
+            context.startService(intent);
+        }
+    }
+
+
+    private void stopService(Context context) {
+        if (mService == null) {
+            Intent intent = new Intent(context, DownloadService.class);
+            context.stopService(intent);
+        }
     }
 
 
