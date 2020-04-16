@@ -6,6 +6,7 @@ import android.content.Context;
 import androidx.multidex.MultiDex;
 
 import com.smasher.downloader.path.AppPath;
+import com.smasher.downloader.path.ApplicationContext;
 
 /**
  * @author matao
@@ -19,11 +20,11 @@ public class MyApplication extends Application {
         super.attachBaseContext(base);
 
         MultiDex.install(this);
+        ApplicationContext.setApplicationContext(this);
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
-        AppPath.init("DownLoad[Dl]");
     }
 }

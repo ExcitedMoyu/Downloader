@@ -1,12 +1,10 @@
 package com.smasher.downloader.path;
 
-import android.content.Context;
+import android.app.Application;
 import android.os.Environment;
-
-import androidx.annotation.NonNull;
-
 import android.text.TextUtils;
 import android.util.Log;
+
 
 import java.io.File;
 
@@ -14,68 +12,124 @@ import java.io.File;
  * @author moyu
  * @date 2017/3/13
  */
-public class AppPath {
-    private static final String TAG = "AppPath";
-    private static String RootPath;
 
-    public static void init(String rootPath) {
-        RootPath = rootPath;
+public class AppPath {
+
+    private static final String TAG = "AppPath";
+
+    public static void init() {
+        String path = getRootPath();
+        Log.d(TAG, "init: " + path);
     }
 
-    private static String getRootPath(@NonNull Context context) {
-        if (TextUtils.isEmpty(RootPath)) {
-            Log.e(TAG, "getRootPath: ");
-            return null;
+    private static String getRootPath() {
+
+        String result = "";
+        File dir = null;
+        Application app = ApplicationContext.getInstance();
+        if (app == null) {
+            return result;
         }
 
-        String uniqueName = "/" + RootPath + "/";
-        File path = context.getFilesDir();
-        String result = (path == null ? "/data/data/" + context.getPackageName() + "/files" : path.getAbsolutePath()) + uniqueName;
         try {
             String state = Environment.getExternalStorageState();
             if (!TextUtils.isEmpty(state) && Environment.MEDIA_MOUNTED.equals(state)) {
-                File externalPath = Environment.getExternalStorageDirectory();
-                if (externalPath != null && externalPath.exists() && externalPath.canWrite()) {
-                    result = externalPath.getAbsolutePath() + uniqueName;
+
+                /*/storage/emulated/0/Android/data/packagename/files/*/
+                File file = app.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
+                if (file != null) {
+                    result = file.getParent();
+//                    File gap = file.getParentFile();
+//                    if (gap != null) {
+//                        result = gap.getParent();
+//                    }
+                }
+            }
+
+            if (!TextUtils.isEmpty(result)) {
+                dir = new File(result);
+            }
+
+            if (dir == null) {
+                return result;
+            }
+
+            if (!dir.exists()) {
+                if (dir.mkdirs()) {
+                    return result;
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        File dir = new File(result);
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
         return result;
     }
 
-    private static String getSubPath(Context context, String subName) {
-        String result = getRootPath(context) + "/" + subName;
+    private static String getSubPath(String subName) {
+
+        if (TextUtils.isEmpty(getRootPath())) {
+            return "";
+        }
+
+        String result = getRootPath() + File.separator + subName;
         File dir = new File(result);
         if (!dir.exists()) {
             dir.mkdirs();
         }
-        return dir.getAbsolutePath() + "/";
+        return dir.getAbsolutePath();
     }
 
-    public static String getCachePath(Context context) {
-        return getSubPath(context, "cache");
+
+    protected static String getCachePath() {
+        File file = ApplicationContext.getInstance().getExternalCacheDir();
+        if (file != null) {
+            if (!file.exists()) {
+                file.mkdirs();
+            }
+            return file.getAbsolutePath();
+        }
+        return null;
     }
 
-    public static String getDownloadPath(Context context) {
-        return getSubPath(context, "download");
+
+    /**
+     * Environment.DIRECTORY_PICTURES
+     *
+     * @param type The type of files directory to return. May be {@code null}
+     *             for the root of the files directory or one of the following
+     *             constants for a subdirectory:
+     *             {@link android.os.Environment#DIRECTORY_MUSIC},
+     *             {@link android.os.Environment#DIRECTORY_PODCASTS},
+     *             {@link android.os.Environment#DIRECTORY_RINGTONES},
+     *             {@link android.os.Environment#DIRECTORY_ALARMS},
+     *             {@link android.os.Environment#DIRECTORY_NOTIFICATIONS},
+     *             {@link android.os.Environment#DIRECTORY_PICTURES}, or
+     *             {@link android.os.Environment#DIRECTORY_MOVIES}.
+     * @return ExternalPath
+     */
+    protected static String getExternalPath(String type) {
+        File file = ApplicationContext.getInstance().getExternalFilesDir(type);
+        if (file != null) {
+            if (!file.exists()) {
+                file.mkdirs();
+            }
+            return file.getAbsolutePath();
+        }
+        return null;
     }
 
-    public static String getLogPath(Context context) {
-        return getSubPath(context, "log");
+
+    protected static String getFontsPath() {
+        return getSubPath("fonts");
     }
 
-    public static String getImagePath(Context context) {
-        return getSubPath(context, "image");
+    protected static String getImagePath() {
+        return getSubPath("image");
     }
 
-    public static String getFontsPath(Context context) {
-        return getSubPath(context, "fonts");
+    protected static String getLogPath() {
+        return getSubPath("log");
     }
+
 
 }

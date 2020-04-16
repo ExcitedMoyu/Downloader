@@ -16,6 +16,7 @@ import com.smasher.downloader.entity.RequestInfo;
 import com.smasher.downloader.listener.DownloadListener;
 import com.smasher.downloader.listener.DownloadObserver;
 import com.smasher.downloader.path.AppPath;
+import com.smasher.downloader.path.Path;
 import com.smasher.downloader.service.DownloadService;
 
 import java.util.ArrayList;
@@ -66,8 +67,7 @@ public class DownloadManager implements DownloadListener {
         startService(context);
 
         if (TextUtils.isEmpty(savePath)) {
-            AppPath.init("Download[DL]");
-            mSavePath = AppPath.getDownloadPath(context);
+            mSavePath = Path.getDownloadPath();
         } else {
             mSavePath = savePath;
         }

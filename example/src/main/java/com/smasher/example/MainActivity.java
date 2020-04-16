@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver 
      * http://download.qidian.com/apknew/source/QDReader.apk
      */
     private static final String Second_URL = "http://download.qidian.com/apknew/source/QDReader.apk";
+    private static final String Second_URL1 = "http://download.qidian.com/apknew/source/QDReader.apk";
 
     /**
      * 12306 APP 下载地址
