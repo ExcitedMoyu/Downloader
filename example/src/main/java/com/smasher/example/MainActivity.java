@@ -1,12 +1,11 @@
 package com.smasher.example;
 
 import android.os.Bundle;
-
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.smasher.downloader.entity.DownloadInfo;
 import com.smasher.downloader.listener.DownloadObserver;
@@ -49,7 +48,6 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver 
      * http://download.qidian.com/apknew/source/QDReader.apk
      */
     private static final String Second_URL = "http://download.qidian.com/apknew/source/QDReader.apk";
-    private static final String Second_URL1 = "http://download.qidian.com/apknew/source/QDReader.apk";
 
     /**
      * 12306 APP 下载地址
@@ -61,6 +59,10 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+
+
         ButterKnife.bind(this);
         DownloadManager.getInstance().init(this, "");
         DownloadManager.getInstance().registerObserver(this, this);
@@ -169,4 +171,7 @@ public class MainActivity extends AppCompatActivity implements DownloadObserver 
     public void onViewClicked() {
         finish();
     }
+
+
+
 }
